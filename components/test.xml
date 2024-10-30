@@ -1,0 +1,5 @@
+<component>
+	<cAttributeInherit style="background-color;position" onclick="" all=''><span style="background-color:#00f;">span</span></cAttributeInherit>
+	<cChildren climit='0'></cChildren>
+	<div style="background-color:#f0f"><span>div</span></div>
+</component>
