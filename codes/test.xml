@@ -1,0 +1,4 @@
+<component>
+	<span>abc</span>
+	<div style="background-color:#f0f"><span>abc</span></div>
+</component>
