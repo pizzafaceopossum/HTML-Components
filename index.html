@@ -9,11 +9,14 @@
 		<meta name="layout-dark" content="1" rel="stylesheet">
 	</head>
 	<body style="background-color:#222">
-		<div id = "display" style="width:100vw;height:100vh">
-			<component ctype="test" style="background-color:#f00;color:#0f0;" title="title" onclick="console.log('hello')"><p>DEF</component>
+		<div id = "header" style="background-color:#aaa; width: 100vw; height: min(50px, 10vh)">
+			<button onclick="saveHTML(display, {linebreak: '\n', tabulator: '\t', trim: true, keepComments: true, inlineTags: true, filename: 'exported '});">export</button>
 		</div>
-		<div id = "textInput"></div>
+		<div id = "display" style="position: absolute; width:100vw; height: calc(100vh - min(10vh, 50px))">
+			<component ctype="test" style="background-color:#f00;position:fixed;color:#0f0;" title="title" onclick="console.log('hello')"><p>DEF</component>
+		</div>
 	</body>
 	<script type="text/javascript" src="./scripts/XMLparser.js"></script>
 	<script type="text/javascript" src="./scripts/component_loader.js"></script>
+	<script type="text/javascript" src="./scripts/serialization.js"></script>
 </html>

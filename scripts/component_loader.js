@@ -30,10 +30,6 @@ async function applyComponentsToHTML(value)
 	}
 }
 
-fetch(window.location + 'components/')
-.then(fetchComponentList)
-//.then(applyComponentsToHTML);
-
 function applyComponents(element)
 {
 	if (element.childElementCount > 0)
@@ -59,16 +55,17 @@ function applyComponents(element)
 
 			// Component innerHTML stored in the file
 		const loadedComponent = loadedComponents[element.attributes['ctype'].nodeValue].documentElement.cloneNode(true);
-		const attributeInheritors = loadedComponent.querySelectorAll('cAttributeInherit');
-		console.log(attributeInheritors);
+		const attributeInheritors = loadedComponent.querySelectorAll('cInherit');
+		//console.log(attributeInheritors);
 		if (attributeInheritors.length > 0)
 		{
 			for (const elem of attributeInheritors)
 			{
 				const attributesToInherit = [...elem.attributes.all ? element.attributes : elem.attributes].filter(attr => !ignoredAttributes.includes(attr.name.toLowerCase()));
 				const styleToInherit = (elem.attributes.all && elem.attributes.style == null) || (elem.attributes.style && /all/.test(elem.attributes.style.value)) ? Object.keys(styleAttributes) : elem.attributes.style.value.split(';').map(e=>e.trim()).filter(e=>Object.keys(styleAttributes).includes(e)&&e.length > 0);
-				console.log('toInherit', attributesToInherit);
-				console.log('style', styleToInherit);
+				//console.log('attributesToInherit', attributesToInherit);
+				console.log('styleToInherit', [...styleToInherit]);
+				console.log('styleAttributes', {...styleAttributes});
 
 				if (elem.childElementCount > 0)
 				{
@@ -87,10 +84,27 @@ function applyComponents(element)
 
 						if (styleToInherit.length > 0)
 						{
-							for (styleAttribute of styleToInherit.filter(e => child.attributes.style ? !RegExp(e).test(child.attributes.style.value) : true).filter(e=>e.length > 0))
+							if (child.attributes.style)
 							{
-								console.log('stattr', styleAttribute);
+								const childStyleAttributes = {};
+								for (const attr of [...child.attributes.style.value.matchAll(/(?<name>[a-zA-Z_\-0-9]+)\s*:\s*(?<value>[^:;]+)/g)].map(e=>e.groups))
+								{
+									childStyleAttributes[attr.name] = attr.value;
+								}
+								console.log('childStyleAttributes', {...childStyleAttributes});
+								console.log('styleToInherit filtered for', child, [...styleToInherit.filter(e => !Object.keys(childStyleAttributes).includes(e)).filter(e=>e.length > 0)]);
+								for (styleAttribute of styleToInherit.filter(e => !Object.keys(childStyleAttributes).includes(e)).filter(e=>e.length > 0))
+								{
+									childStyleAttributes[styleAttribute] = styleAttributes[styleAttribute];
+								}
+								child.setAttribute('style', Object.entries(childStyleAttributes).map(e=>e.join(':')).join(';'));
 							}
+							else
+							{
+								child.setAttribute('style', Object.entries(styleAttributes).map(e=>e.join(':')).join(';'));
+								console.log(child);
+							}
+							// console.log('resulting childStyleAttributes', {...childStyleAttributes});
 						}
 					}
 				}
@@ -114,5 +128,6 @@ function applyComponents(element)
 	}
 }
 
-setTimeout(() => {applyComponents(document.body)}, 100);
-//setTimeout(() => {ArraytoHTML(parsedOutput)}, 200);
+fetch(window.location + 'components/')
+.then(fetchComponentList)
+.then(() => {applyComponents(display)});

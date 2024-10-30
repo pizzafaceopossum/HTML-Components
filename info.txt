@@ -7,7 +7,7 @@ Todo
 - Export resulting HTML
 - Importing HTML and replacing swapping in known components
 - System where components themselves have defined attributes that are inherited (like normal HTML does) as well as a way for modified attributes on instances to trickle down
-	- cAttributeInherit tag: Indicates that the contained HTML elements should inherit attribute changes made in an instance
+	- cInherit tag: Indicates that the contained HTML elements should inherit attribute changes made in an instance
 		(i.e., <component cID="button" style="background-color: red"></component> => <button style="background-color: red">)
 	The tag can be given a list of attributes and style attributes to inherit, or a keyword like "all"
 	-
