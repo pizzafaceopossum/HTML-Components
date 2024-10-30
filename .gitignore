@@ -1,2 +1,4 @@
 style/
 favicon.ico
+components/*
+!components/Examples*
