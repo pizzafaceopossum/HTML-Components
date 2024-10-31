@@ -1,57 +1,121 @@
-
-	// Loaded components: components that are available to use after being located on the file system.
-const loadedComponents = {};
-	// Style classes: Sort of like regular CSS classes except they are specifically only able to use inline style attributes.
-	// Also, they are set up to be exported into the style attribute when exporting.
-const styleClasses = {};
-
-	// XML attributes that are ignored when using inheritance.
-const ignoredAttributes = ['ctype', 'climit', 'style'];
-
-
-	// Fetches a file and returns an XMLDocument after parsing the contents.
-async function fetchComponent(value)
+	// Applies attribute inheritance to inheritors
+	// If the inheritor defines that attribute, it will not be overwritten
+	// Style is unique, it has style attributes which are themselves separately inherited
+	// E.g., <cInherit style="background-color;position;color" onclick=""><span style="position:relative;">span</span><span>span</span></cInherit>
+function applyAttributeInheritance(elem, attributes, styleAttributes)
 {
-	return (new DOMParser()).parseFromString(await value.text(), 'text/xml')
-}
+	const attributesToInherit = [...elem.attributes.all ? attributes : elem.attributes].filter(attr => !ignoredAttributes.includes(attr.name.toLowerCase()));
+	const styleToInherit = (elem.attributes.all && elem.attributes.style == null) || (elem.attributes.style && /all/.test(elem.attributes.style.value)) ? Object.keys(styleAttributes) : elem.attributes.style.value.split(';').map(e=>e.trim()).filter(e=>Object.keys(styleAttributes).includes(e)&&e.length > 0);
 
-	// Fetches all files from the 'components' folder (with recursion, ignores hidden files) and adds them to the components object
-	// See README for details
-async function fetchComponentList(value)
-{
-		// Parses the response from the server as HTML.
-	const parsedResponse = (new DOMParser()).parseFromString(await value.text(), 'text/html');
-		// Locates 'a' elements with 'icon-xml' class (for use with npm live-server)
-	const xmlAnchors = [...parsedResponse.querySelectorAll('a.icon-xml')];
-		// Locates 'a' elements with 'icon-directory' class and filters out hidden folders and the 'go back' folder.
-	const directoryAnchors = [...parsedResponse.querySelectorAll('a.icon-directory')]
-		.filter(anchor => anchor.title[0] != '.' );
-	
-	for (const anchor of directoryAnchors)
+	console.log('elem', elem, 'given attributes', attributes, 'given style', styleAttributes, 'toInherit', attributesToInherit, 'styleToInherit', styleToInherit);
+	if (elem.childElementCount > 0)
 	{
-			// If a directory is found, recursively call this same function.
-		await fetch(anchor.href).then(fetchComponentList);
-	}
-	for (const anchor of xmlAnchors)
-	{
-			// If an xml is found, parse it and add it to the list. Raise an error if there are multiple with the same name, and say where they're at.
-		const name = anchor.title.substring(0, anchor.title.length - 4).toLowerCase();
-		if (loadedComponents[name] != null)
+		for (const child of elem.children)
 		{
-			throw SyntaxError(`redeclaration of component '${name}' (From '${anchor.pathname.replace(/\/components/, '~')}' and '${loadedComponents[name].path}')`);
+				// Defining attributes on the child elements in the component overwrites this behavior
+				// So attributes can operate on a whitelist by wrapping child elements and setting the attributes,
+				// Or a blacklist by wrapping the entire component's contents and setting to 'all', and just setting individual attributes.
+				// Or a mix of both as fitting.
+			for (attribute of attributesToInherit.filter(attr => child.attributes[attr.name] == null))
+			{
+				child.attributes.setNamedItem(attribute.cloneNode(true));
+			}
+
+			if (styleToInherit.length > 0)
+			{
+				const childStyleAttributes = {};
+				for (styleAttribute of styleToInherit.filter(e => !Object.keys(childStyleAttributes).includes(e)).filter(e=>e.length > 0))
+				{
+					childStyleAttributes[styleAttribute] = styleAttributes[styleAttribute];
+				}
+				if (child.attributes.style)
+				{
+					for (const attr of getStyleFromString(child.attributes.style.value))
+					{
+						childStyleAttributes[attr.name] = attr.value;
+					}
+				}
+				child.setAttribute('style', styleStringFromObject(childStyleAttributes));
+			}
 		}
-			// Add it to the list as an XML document (so DOM code can be used on it)
-		loadedComponents[name] = {path: anchor.pathname.replace(/\/components/, '~'), document: await fetch(anchor.href).then(fetchComponent)};
 	}
+	elem.outerHTML = elem.getHTML();
 }
 
-	// Make a copy of a loaded component to be inserted somewhere.
-function copyLoadedComponent(ctype)
+function applyStyleClasses(elements)
 {
-	ctype = ctype.split('::');
-	const ns = ctype[0];
-	const type = ctype[1];
-	return loadedComponents[ns].document.querySelector(`[ctype=${type}]`).cloneNode(true);
+	for (const element of elements)
+	{
+		const styleClasses = element.attributes['style-class'].value.split(',').filter(e=>e).map(e=>getStyleClass(e));
+		const styleAttributes = {};
+		
+		if (element.attributes.style)
+		{
+			const childStyleAttributes = {};
+			for (const attr of getStyleFromString(element.attributes.style.value))
+			{
+				childStyleAttributes[attr.name] = attr.value;
+			}
+			for (const styleClass of styleClasses)
+			{
+				Object.assign(styleAttributes, styleClass);
+			}
+			Object.assign(styleAttributes, childStyleAttributes);
+		}
+		else
+		{
+			for (const styleClass of styleClasses)
+			{
+				Object.assign(styleAttributes, styleClass);
+			}
+		}
+		element.setAttribute('style', styleStringFromObject(styleAttributes));
+		element.removeAttribute('style-class');
+	}
+	
+}
+
+function applyComponent(component)
+{
+		// Copy the inner HTML for this instance of the component as the 'child', as well as attributes
+	const innerHTML = component.getHTML();
+	const attributes = component.attributes;
+	const styleAttributes = {};
+	if (attributes.style)
+	{
+		for (const attr of [...attributes.style.value.matchAll(/(?<name>[a-zA-Z_\-0-9]+)\s*:\s*(?<value>[^:;]+)/g)].map(e=>e.groups))
+		{
+			styleAttributes[attr.name] = attr.value;
+		}
+	}
+
+		// Get a duplicate of the component to edit into the instance
+	const loadedComponent = copyLoadedComponent(component.attributes.ctype.nodeValue);
+	console.log(loadedComponent);
+	applyComponents(loadedComponent);
+	let inheritor = loadedComponent.querySelector('cInherit');
+		// Locate any attribute inheritors in the component
+	while (inheritor != null)
+	{
+		console.log('inheritor', inheritor);
+		applyAttributeInheritance(inheritor, component.attributes, styleAttributes);
+		inheritor = loadedComponent.querySelector('cInherit');
+	}
+	applyStyleClasses(loadedComponent.querySelectorAll('[style-class]'));
+
+		// Look for '<children></children>' in the component file
+	const childPlacement = loadedComponent.querySelector('cChildren');
+
+		// If the component HTML says where to place the child HTML, place it there
+	if (childPlacement)
+	{
+		childPlacement.outerHTML = innerHTML;
+		component.outerHTML = loadedComponent.getHTML().trim();
+	}
+	else	// Place it at the end, otherwise
+	{
+		component.outerHTML = loadedComponent.getHTML().trim() + innerHTML;
+	}
 }
 
 	// Replace any components that are children of 'element' with the HTML that they stand for.
@@ -67,88 +131,13 @@ function applyComponents(element)
 		}
 	}
 		// If this element is a component, then execute the replacement function.
-	if (element.tagName.toLowerCase() == 'component')
+	switch (element.tagName.toLowerCase())
 	{
-			// Copy the inner HTML for this instance of the component as the 'child', as well as attributes
-		const innerHTML = element.innerHTML;
-		const attributes = element.attributes;
-		const styleAttributes = {};
-		if (attributes.style)
-		{
-			for (const attr of [...attributes.style.value.matchAll(/(?<name>[a-zA-Z_\-0-9]+)\s*:\s*(?<value>[^:;]+)/g)].map(e=>e.groups))
-			{
-				styleAttributes[attr.name] = attr.value;
-			}
-		}
-
-			// Get a duplicate of the component to edit into the instance
-		const loadedComponent = copyLoadedComponent(element.attributes.ctype.nodeValue);
-		console.log(loadedComponent);
-		const attributeInheritors = loadedComponent.querySelectorAll('cInherit');
-		//console.log(attributeInheritors);
-		if (attributeInheritors.length > 0)
-		{
-			for (const elem of attributeInheritors)
-			{
-				const attributesToInherit = [...elem.attributes.all ? element.attributes : elem.attributes].filter(attr => !ignoredAttributes.includes(attr.name.toLowerCase()));
-				const styleToInherit = (elem.attributes.all && elem.attributes.style == null) || (elem.attributes.style && /all/.test(elem.attributes.style.value)) ? Object.keys(styleAttributes) : elem.attributes.style.value.split(';').map(e=>e.trim()).filter(e=>Object.keys(styleAttributes).includes(e)&&e.length > 0);
-
-				if (elem.childElementCount > 0)
-				{
-					for (const child of elem.children)
-					{
-							// Defining attributes on the child elements in the component overwrites this behavior
-							// So attributes can operate on a whitelist by wrapping child elements and setting the attributes,
-							// Or a blacklist by wrapping the entire component's contents and setting to 'all', and just setting individual attributes.
-							// Or a mix of both as fitting.
-						for (attribute of attributesToInherit.filter(attr => child.attributes[attr.name] == null))
-						{
-							child.attributes.setNamedItem(attribute.cloneNode(true));
-						}
-
-						if (styleToInherit.length > 0)
-						{
-							if (child.attributes.style)
-							{
-								const childStyleAttributes = {};
-								for (const attr of [...child.attributes.style.value.matchAll(/(?<name>[a-zA-Z_\-0-9]+)\s*:\s*(?<value>[^:;]+)/g)].map(e=>e.groups))
-								{
-									childStyleAttributes[attr.name] = attr.value;
-								}
-								for (styleAttribute of styleToInherit.filter(e => !Object.keys(childStyleAttributes).includes(e)).filter(e=>e.length > 0))
-								{
-									childStyleAttributes[styleAttribute] = styleAttributes[styleAttribute];
-								}
-								child.setAttribute('style', Object.entries(childStyleAttributes).map(e=>e.join(':')).join(';'));
-							}
-							else
-							{
-								child.setAttribute('style', Object.entries(styleAttributes).map(e=>e.join(':')).join(';'));
-							}
-							// console.log('resulting childStyleAttributes', {...childStyleAttributes});
-						}
-					}
-				}
-				elem.outerHTML = elem.innerHTML;
-			}
-		}
-
-			// Look for '<children></children>' in the component file
-		const childPlacement = loadedComponent.querySelector('cChildren')
-
-			// If the component HTML says where to place the child HTML, place it there
-		if (childPlacement)
-		{
-			childPlacement.outerHTML = innerHTML;
-			element.outerHTML = loadedComponent.innerHTML.trim();
-		}
-		else	// Place it at the end, otherwise
-		{
-			element.outerHTML = loadedComponent.innerHTML.trim() + innerHTML;
-		}
+		case 'component':
+			applyComponent(element);
+			break;
+		//case 'cinherit':
+		//	applyAttributeInheritance(element);
+		//	break;
 	}
 }
-
-fetch(window.location + 'components/')
-.then(fetchComponentList)
-.then(() => {applyComponents(display)});
