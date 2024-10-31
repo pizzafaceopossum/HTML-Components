@@ -1,5 +1,5 @@
-10/30/2024
+10/31/2024
 
 Todo
-- Style classes
-- Importing HTML and replacing swapping in known components
+- Ensure correct behavior with nesting, etc.
+- Think of more useful stuff
