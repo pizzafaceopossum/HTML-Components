@@ -2,10 +2,6 @@
 <html>
 	<head>
 		<meta charset="utf-8" />
-		<title>Toyhouse HTML Builder</title>
-		<link href="./style/main.css" rel="stylesheet">
-		<link href="./style/site_pink-velvet-cake.css" rel="stylesheet">
-		<link href="./style/styles__ltr.css" rel="stylesheet">
 		<meta name="layout-dark" content="1" rel="stylesheet">
 	</head>
 	<body style="background-color:#222">
@@ -13,7 +9,7 @@
 			<button onclick="saveHTML(display, {linebreak: '\n', tabulator: '\t', trim: true, keepComments: true, inlineTags: true, filename: 'exported '});">export</button>
 		</div>
 		<div id = "display" style="position: absolute; width:100vw; height: calc(100vh - min(10vh, 50px))">
-			<component ctype="test::button" style="background-color:#f00;position:fixed;color:#0f0;" title="title" onclick="console.log('hello')"><p>DEF</component>
+			<component ctype="test::button" style="background-color:#f00;position:fixed;color:#0f0;" title="title" onclick="console.log('hello')"><span>Some child content</span><div style="background-color:#00f"><span>Child content with a different style applied</span></div></component>
 		</div>
 	</body>
 	<script type="text/javascript" src="./scripts/XMLparser.js"></script>

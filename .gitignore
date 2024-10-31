@@ -1,4 +1,9 @@
 style/
 favicon.ico
 components/*
+style classes/*
+fonts/*
+webfonts/*
 !components/Examples*
+*.html
+!index.html

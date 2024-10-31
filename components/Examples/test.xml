@@ -1,5 +1,15 @@
-<component ctype="button">
-	<cInherit style="background-color;position;color" onclick=""><span style="position:relative;">span</span><span>span</span></cInherit>
-	<cChildren climit='0'></cChildren>
-	<div style="background-color:#f0f"><span>div</span></div>
-</component>
+<xml>
+	<component ctype="button">
+		<cInherit style="background-color;position;color" onclick=""><span style="position:relative;">span</span><span>span</span></cInherit>
+		<cChildren climit='0'></cChildren>
+		<div style="background-color:#f0f"><span>div</span></div>
+	</component>
+
+	<component ctype="button2">
+		<cInherit style="background-color;position;color" onclick=""><span style="position:relative;">span</span><span>span</span></cInherit>
+		<cChildren climit='0'></cChildren>
+		<div style="background-color:#f0f"><span>div</span></div>
+	</component>
+
+	<styleclass stype="class" style="background-color: #f00; color:#0f0"></styleclass>
+</xml>

@@ -38,10 +38,51 @@ async function fetchComponentList(value)
 		const name = anchor.title.substring(0, anchor.title.length - 4).toLowerCase();
 		if (loadedComponents[name] != null)
 		{
-			throw SyntaxError(`redeclaration of component '${name}' (From '${anchor.pathname.replace(/\/components/, '~')}' and '${loadedComponents[name].path}')`);
+			throw SyntaxError(`duplicate namespace (use a different file name) '${name}' (From '${anchor.pathname.replace(/\/components/, '~')}' and '${loadedComponents[name].path}')`);
 		}
 			// Add it to the list as an XML document (so DOM code can be used on it)
-		loadedComponents[name] = {path: anchor.pathname.replace(/\/components/, '~'), document: await fetch(anchor.href).then(fetchComponent)};
+		const doc = await fetch(anchor.href).then(fetchComponent);
+		loadedComponents[name] = {path: anchor.pathname.replace(/\/components/, '~'), document: doc};
+		const duplicates = {ctype: {}, stype: {}};
+		
+		for (const styleClass of doc.querySelectorAll('styleclass'))
+		{
+			//console.log(styleClass);
+			if (!styleClass.attributes.stype || !styleClass.attributes.stype.value)
+			{
+				throw SyntaxError(`Undefined or empty stype in namespace '${name}' (From '${loadedComponents[name].path}')`);
+			}
+			else if (duplicates.stype[styleClass.attributes.stype.value])
+			{
+				throw SyntaxError(`Duplicate styleclass '${styleClass.attributes.stype.value}' in namespace '${name}' (From '${loadedComponents[name].path}')`);
+			}
+			duplicates.stype[styleClass.attributes.stype.value] = true;
+			styleClass.stype = `${name}::${styleClass.stype}`;
+		}
+		for (const definition of doc.querySelectorAll('cdefn'))
+		{
+			//console.log(definition);
+			if (!definition.attributes.ctype || !definition.attributes.ctype.value)
+			{
+				throw SyntaxError(`Undefined or empty ctype in namespace '${name}' (From '${loadedComponents[name].path}')`);
+			}
+			else if (duplicates.ctype[definition.attributes.ctype.value] == true)
+			{
+				throw SyntaxError(`Duplicate cdefn '${definition.attributes.ctype.value}' in namespace '${name}' (From '${loadedComponents[name].path}')`);
+			}
+			duplicates.ctype[definition.attributes.ctype.value] = true;
+			for (const componentChild of definition.querySelectorAll('component'))
+			{
+				componentChild.attributes.ctype.value = `${name}::${componentChild.attributes.ctype.value}`;
+			}
+		}
+		for (const elementWithStyleClass of doc.querySelectorAll(`[style-class]`))
+		{
+			elementWithStyleClass.attributes['style-class'].value = elementWithStyleClass.attributes['style-class'].value
+			.split(',')
+			.map(e => `${name}::${e.trim().toLowerCase()}`)
+			.join(',');
+		}
 	}
 }
 
@@ -49,9 +90,24 @@ async function fetchComponentList(value)
 function copyLoadedComponent(ctype)
 {
 	ctype = ctype.split('::');
-	const ns = ctype[0];
-	const type = ctype[1];
-	return loadedComponents[ns].document.querySelector(`[ctype=${type}]`).cloneNode(true);
+	const ns = ctype[0].toLowerCase().trim();
+	const type = ctype[1].trim();
+	return loadedComponents[ns].document.querySelector(`cdefn[ctype="${type}"]`).cloneNode(true);
+}
+
+function getStyleClass(stype)
+{
+	const styleClass = {};
+	stype = stype.split('::');
+	const ns = stype[0];
+	const type = stype[1];
+	for (const styleAttr of loadedComponents[ns].document.querySelector(`styleclass[stype="${type}"]`).attributes.style.value.split(';').filter(e=>e))
+	{
+		const split = styleAttr.split(':').filter(e=>e);
+		console.log('split', split);
+		styleClass[split[0].trim()] = split[1].trim();
+	};
+	return styleClass;
 }
 
 	// Applies attribute inheritance to inheritors
@@ -103,15 +159,44 @@ function applyAttributeInheritance(inheritors, attributes, styleAttributes)
 					}
 				}
 			}
-			elem.outerHTML = elem.innerHTML;
+			elem.outerHTML = elem.getHTML();
 		}
 	}
+}
+
+function applyStyleClasses(elements)
+{
+	console.log('elements', elements);
+	for (const element of elements)
+	{
+		console.log(element.attributes['style-class'].value);
+		const styleClasses = element.attributes['style-class'].value.split(',').filter(e=>e).map(e=>getStyleClass(e));
+		console.log('classes', styleClasses);
+		const styleAttributes = {};
+		
+		if (element.attributes.style)
+		{
+			const childStyleAttributes = {};
+			for (const attr of [...element.attributes.style.value.matchAll(/(?<name>[a-zA-Z_\-0-9]+)\s*:\s*(?<value>[^:;]+)/g)].map(e=>e.groups))
+			{
+				childStyleAttributes[attr.name] = attr.value;
+			}
+			for (const styleClass of styleClasses)
+			{
+				Object.assign(styleAttributes, styleClass);
+			}
+			Object.assign(styleAttributes, childStyleAttributes);
+		}
+		element.setAttribute('style', Object.entries(styleAttributes).map(e=>e.join(':')).join(';'));
+		element.removeAttribute('style-class');
+	}
+	
 }
 
 function applyComponent(component)
 {
 		// Copy the inner HTML for this instance of the component as the 'child', as well as attributes
-	const innerHTML = component.innerHTML;
+	const innerHTML = component.getHTML();
 	const attributes = component.attributes;
 	const styleAttributes = {};
 	if (attributes.style)
@@ -124,21 +209,23 @@ function applyComponent(component)
 
 		// Get a duplicate of the component to edit into the instance
 	const loadedComponent = copyLoadedComponent(component.attributes.ctype.nodeValue);
+	applyComponents(loadedComponent);
 		// Locate any attribute inheritors in the component
 	applyAttributeInheritance(loadedComponent.querySelectorAll('cInherit'), component.attributes, styleAttributes);
+	applyStyleClasses(loadedComponent.querySelectorAll('[style-class]'));
 
 		// Look for '<children></children>' in the component file
-	const childPlacement = loadedComponent.querySelector('cChildren')
+	const childPlacement = loadedComponent.querySelector('cChildren');
 
 		// If the component HTML says where to place the child HTML, place it there
 	if (childPlacement)
 	{
 		childPlacement.outerHTML = innerHTML;
-		component.outerHTML = loadedComponent.innerHTML.trim();
+		component.outerHTML = loadedComponent.getHTML().trim();
 	}
 	else	// Place it at the end, otherwise
 	{
-		component.outerHTML = loadedComponent.innerHTML.trim() + innerHTML;
+		component.outerHTML = loadedComponent.getHTML().trim() + innerHTML;
 	}
 }
 
@@ -161,6 +248,6 @@ function applyComponents(element)
 	}
 }
 
-fetch(window.location + 'components/')
+fetch(window.location.origin + '/components/')
 .then(fetchComponentList)
 .then(() => {applyComponents(display)});
