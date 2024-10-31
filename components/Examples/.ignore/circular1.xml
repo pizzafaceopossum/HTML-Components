@@ -1,0 +1,9 @@
+<xml>
+	<cdefn ctype="c1">
+		<component ctype="c2"></component>
+	</cdefn>
+	<cdefn ctype="c2">
+		<span>abc</span>
+		<component ctype="circular2::c3"></component>
+	</cdefn>
+</xml>

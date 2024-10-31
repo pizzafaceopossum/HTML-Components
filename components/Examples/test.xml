@@ -10,7 +10,7 @@
 		<cChildren climit='0'></cChildren>
 		<div style="background-color:#f0f"><span>div</span></div>
 	</cdefn>
-
+	
 	<cdefn ctype="inner">
 		<cInherit style="background-color;color" title="">
 			<span>2 (Inherits colors from inner which inherits all from outer)</span>
