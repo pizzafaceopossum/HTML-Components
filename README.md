@@ -9,7 +9,7 @@ XML Components are simple. You store a definition (some inner XML with other ext
 While the concept on its own is already powerful enough for the inspiring use-case (passing some HTML by reference rather than by value), I have added and will continue to add cherries on top.
 
 #### Precise Attribute Inheritance
-Components can be defined such that instances pass attributes in very precise ways: Enclosing portions of the body of a component definition with a \<cInherit\> tag indicates that matching attributes applied to *instanced copies* should be applied to all of the top level children of the \<cInherit\>. Furthermore, this works the same way for *style attributes*.
+Components can be defined such that instances pass attributes in very precise ways: Enclosing portions of the body of a component definition with a \<cInherit\> tag indicates that matching attributes applied to *instanced copies* should be applied to all of the top level children of the \<cInherit\>. Furthermore, this works the same way for *style attributes*. Defaults for these can be set on the children, which will be used if the component does not have that attribute passed, enabling a "default style" for a component.
 
 #### Child Placement
 Component definitions also allow for the choice of where children of the *instance* are placed. I plan to flesh this out a bit with custom tags attributes to have a limit for one area before moving on to the next, or alternating between multiple spots.

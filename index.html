@@ -5,8 +5,11 @@
 	</head>
 	<body style="background-color:#000; color:#f0f;">
 		<div style="position:absolute; top: 0px; left: 0px; width: 100vw; height: 100vh; display: flex; flex-direction: column;">
-			<div id = "header" style="background-color:#aaa; width: 100vw; height: 43.2px">
-				<button onclick="saveHTML(display, {linebreak: '\n', tabulator: '\t', trim: true, keepComments: true, inlineTags: true, filename: 'exported '});">export</button>
+			<div id = "header" style="background-color:#aaa; width: 100vw; height: 43.2px;">
+				<div style="width: 20vw; display: inline-block;"></div>
+				<button id="save" onclick="saveHTML(display, {linebreak: '\n', tabulator: '\t', trim: true, keepComments: true, inlineTags: true, filename: 'exported ',});">export</button>
+				<button id="copy" onclick="saveHTML(display, {linebreak: '\n', tabulator: '\t', trim: true, keepComments: true, inlineTags: true, clipboard: true,});">copy to clipboard</button>
+				<span id="copyNotif" style="color:#000;display:none;">Copied!</span>
 			</div>
 			<div id = "display" style="position:absolute; top: 43.2px; left: 0px; width: 100vw;">
 				<div style="display:flex; flex-direction: row; width: 100%;">
@@ -22,7 +25,6 @@
 			</div>
 		</div>
 	</body>
-	<script type="text/javascript" src="./scripts/XMLparser.js"></script>
 	<script type="text/javascript" src="./scripts/init.js"></script>
 	<script type="text/javascript" src="./scripts/util.js"></script>
 	<script type="text/javascript" src="./scripts/component_application.js"></script>

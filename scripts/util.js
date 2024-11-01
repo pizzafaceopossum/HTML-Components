@@ -6,18 +6,29 @@ function saveHTML(element, options = {}) {
 	.replaceAll(',', ' ')
 	.replaceAll(':', '-');
 
-	const filename = options.filename || '';
+	const filename = options.filename || 'clipboard';
+	
 
-	const html = ArraytoHTML(HTMLtoArray(element.getHTML()), options);
+	const html = element.getHTML().trim();
 
-	const blob = new Blob([html.trim()], { type: 'text/html' });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = filename + timestamp + '.html';
-	a.click();
+	if (filename == 'clipboard')
+	{
+		navigator.clipboard.writeText(html);
+		copy.disabled = true;
+		copyNotif.style.display = "inline-block";
+		setTimeout(() => {copy.disabled = false; copyNotif.style.display = "none"}, 2000);
+	}
+	else
+	{
+		const blob = new Blob([html], { type: 'text/html' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = filename + timestamp + '.html';
+		a.click();
 
-	URL.revokeObjectURL(url);
+		URL.revokeObjectURL(url);
+	}
 }
 
 	// Takes a style string and returns an array e.g. [{name: 'position', value: 'relative'}, {name: 'width', value: '150px'}]

@@ -13,40 +13,57 @@
 	// E.g., <cInherit style="background-color;position;color" onclick=""><span style="position:relative;">span</span><span>span</span></cInherit>
 function applyAttributeInheritance(elem, attributes, styleAttributes)
 {
-	const attributesToInherit = [...elem.attributes.all ? attributes : elem.attributes].filter(attr => !ignoredAttributes.includes(attr.name.toLowerCase()));
-	const styleToInherit = (elem.attributes.all && elem.attributes.style == null) || (elem.attributes.style && /all/.test(elem.attributes.style.value)) ? Object.keys(styleAttributes) : elem.attributes.style.value.split(';').map(e=>e.trim()).filter(e=>Object.keys(styleAttributes).includes(e)&&e.length > 0);
-
-	//console.log('elem', elem, 'given attributes', attributes, 'given style', styleAttributes, 'toInherit', attributesToInherit, 'styleToInherit', styleToInherit);
-	if (elem.childElementCount > 0)
+	/*
+	console.log('inherit element', elem);
+	console.log('component attributes', attributes);
+	console.log('component style attributes', styleAttributes);
+	*/
+		// Don't even bother to do anything if the inheritor doesn't say to inherit any attributes or the component has none set
+	if ([...elem.attributes].length > 0 && [...attributes].filter(attr => !ignoredAttributes.includes(attr.name.toLowerCase())).length + Object.keys(styleAttributes).length > 0)
 	{
-		for (const child of elem.children)
-		{
-				// Defining attributes on the child elements in the component overwrites this behavior
-				// So attributes can operate on a whitelist by wrapping child elements and setting the attributes,
-				// Or a blacklist by wrapping the entire component's contents and setting to 'all', and just setting individual attributes.
-				// Or a mix of both as fitting.
-			for (attribute of attributesToInherit.filter(attr => child.attributes[attr.name] == null))
-			{
-				child.attributes.setNamedItem(attribute.cloneNode(true));
-			}
+			// Inherit attributes: If the 'all' attribute is set, just do them all, otherwise only do the ones that are set
+		let attributesToInherit = [...elem.attributes.all ? attributes : elem.attributes].filter(attr => !ignoredAttributes.includes(attr.name.toLowerCase()));
+			// Inherit style attributes: If 
+		let styleToInherit = Object.keys(styleAttributes);
 
-			if (styleToInherit.length > 0)
+		if (elem.attributes.style)
+		{
+			styleToInherit = /all/.test(elem.attributes.style.value) ? styleToInherit : styleToInherit.filter(e => RegExp(e).test(elem.attributes.style.value));
+		}
+		else
+		{
+			styleToInherit = [];
+		}
+		//console.log('elem', elem, 'given attributes', attributes, 'given style', styleAttributes, 'toInherit', attributesToInherit, 'styleToInherit', styleToInherit);
+		if (elem.childElementCount > 0)
+		{
+			for (const child of elem.children)
 			{
-				const childStyleAttributes = {};
-				for (styleAttribute of styleToInherit.filter(e => !Object.keys(childStyleAttributes).includes(e)).filter(e=>e.length > 0))
+					// Attributes overwrite those already set, when they exist on the parent instance
+				for (attribute of attributesToInherit)
 				{
-					childStyleAttributes[styleAttribute] = styleAttributes[styleAttribute];
+					child.attributes.setNamedItem(attribute.cloneNode(true));
 				}
-				if (child.attributes.style)
+
+				if (styleToInherit.length > 0)
 				{
-					for (const attr of getStyleFromString(child.attributes.style.value))
+					const childStyleAttributes = {};
+					if (child.attributes.style)
 					{
-						childStyleAttributes[attr.name] = attr.value;
+						for (const attr of getStyleFromString(child.attributes.style.value))
+						{
+							childStyleAttributes[attr.name] = attr.value;
+						}
 					}
+					Object.assign(childStyleAttributes, styleAttributes);
+					child.setAttribute('style', styleStringFromObject(childStyleAttributes));
 				}
-				child.setAttribute('style', styleStringFromObject(childStyleAttributes));
 			}
 		}
+	}
+	else
+	{
+		console.log('def');
 	}
 	elem.outerHTML = elem.getHTML().trim();
 }

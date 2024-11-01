@@ -1,3 +1,5 @@
+scripts/HTMLparser.js
+scripts/XMLparser.js
 style/
 favicon.ico
 components/*
