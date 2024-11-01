@@ -1,7 +1,7 @@
-	// Fetches a file and returns an XMLDocument after parsing the contents.
+	// Fetches a file and returns an HTMLDocument after parsing the contents.
 async function fetchComponent(value)
 {
-	return (new DOMParser()).parseFromString(await value.text(), 'text/xml')
+	return (new DOMParser()).parseFromString(await value.text(), 'text/html');
 }
 
 	// Fetches all files from the 'components' folder (with recursion, ignores hidden files) and adds them to the components object
@@ -10,8 +10,8 @@ async function fetchComponentList(value)
 {
 		// Parses the response from the server as HTML.
 	const parsedResponse = (new DOMParser()).parseFromString(await value.text(), 'text/html');
-		// Locates 'a' elements with 'icon-xml' class (for use with npm live-server)
-	const xmlAnchors = [...parsedResponse.querySelectorAll('a.icon-xml')];
+		// Locates 'a' elements with 'icon-html' class (for use with npm live-server)
+	const htmlAnchors = [...parsedResponse.querySelectorAll('a.icon-html')];
 		// Locates 'a' elements with 'icon-directory' class and filters out hidden folders and the 'go back' folder.
 	const directoryAnchors = [...parsedResponse.querySelectorAll('a.icon-directory')]
 		.filter(anchor => anchor.title[0] != '.' );
@@ -21,20 +21,21 @@ async function fetchComponentList(value)
 			// If a directory is found, recursively call this same function.
 		await fetch(anchor.href).then(fetchComponentList);
 	}
-	for (const anchor of xmlAnchors)
+	for (const anchor of htmlAnchors)
 	{
-			// If an xml is found, parse it and add it to the list. Raise an error if there are multiple with the same name, and say where they're at.
-		const name = anchor.title.substring(0, anchor.title.length - 4).toLowerCase();
+			// If an html is found, parse it and add it to the list. Raise an error if there are multiple with the same name, and say where they're at.
+		const name = anchor.title.replaceAll(/\..*/g, '').toLowerCase();
+		const path = anchor.pathname.replace(/\/components/, '~');
 		if (loadedComponents[name] != null)
 		{
-			throw SyntaxError(`duplicate namespace (use a different file name) '${name}' (From '${anchor.pathname.replace(/\/components/, '~')}' and '${loadedComponents[name].path}')`);
+			throw SyntaxError(`duplicate namespace (use a different file name) '${name}' (From '${path}' and '${loadedComponents[name].path}')`);
 		}
-			// Add it to the list as an XML document (so DOM code can be used on it)
+			// Add it to the list as an HTML document (so DOM code can be used on it)
 		const doc = await fetch(anchor.href).then(fetchComponent);
-		loadedComponents[name] = {path: anchor.pathname.replace(/\/components/, '~'), document: doc, references: {}};
+		loadedComponents[name] = {path: path, document: doc, references: {}};
 		const duplicates = {ctype: {}, stype: {}};
 		const internalReferences = {};
-		for (const child of doc.documentElement.children)
+		for (const child of doc.documentElement.querySelector('body').children)
 		{
 			switch (child.tagName.toLowerCase())
 			{
@@ -87,15 +88,9 @@ async function fetchComponentList(value)
 			
 		}
 		loadedComponents[name].references = internalReferences;
-		/*
-		if (!checkCircularReferences2(internalReferences))
+		for (const element of doc.querySelectorAll(`[style-class]`))
 		{
-			throw SyntaxError(`Circular reference (don't nest components within their own definitions) found in namespace '${name}' (From '${loadedComponents[name].path}')`)
-		}
-		*/
-		for (const elementWithStyleClass of doc.querySelectorAll(`[style-class]`))
-		{
-			elementWithStyleClass.attributes['style-class'].value = elementWithStyleClass.attributes['style-class'].value
+			element.attributes['style-class'].value = element.attributes['style-class'].value
 			.split(',')
 			.map(e => `${name}::${e.trim().toLowerCase()}`)
 			.join(',');
@@ -206,7 +201,7 @@ function checkCircularReferences2(object)
 			}
 		}
 	}
-	console.log('circularReferences2: loops:', loops, "time:", performance.now() - time);
+	//console.log('circularReferences2: loops:', loops, "time:", performance.now() - time);
 	return Object.keys(object).length == 0;
 }
 

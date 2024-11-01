@@ -1,4 +1,4 @@
-# XML Components
+# HTML Components
 ### Why? Can't you just use CSS or JavaScript?
 This is a tool meant to drastically reduce work time when designing HTML specific styling. The inspiring use-case for this required inline styling only, with JavaScript unavailable as well. Which means no custom CSS classes, either. As a result, styling that would otherwise be a simple hour long task became a multi-day effort as repetetive copied and pasted code became a mess, and if you made a mistake on something that was pasted everywhere, it was hell to try to find everywhere that needed fixed.
 
@@ -17,8 +17,13 @@ Component definitions also allow for the choice of where children of the *instan
 #### Updates Apply Everywhere, Even Other Components
 The obvious reason why components save so much time when unable to define your own CSS classes. If you put 30 copies of a component in your HTML, and you need to update the component, all of those copies are automatically handled. Otherwise, you'll have to copy and paste and make sure you get each one. But even better than that, components are recursive! So if you define Component A, and Component B contains a copy of Component A, nothing needs to be done in the definition of Component B.
 
+#### Namespace Structure
+Multiple components are defined and stored together in a file whose name becomes their namespace. This way, you can refer to components between files! Perhaps you want to store your components by type, such as a file full of buttons. That's your prerogative. I like to store them by theme, but with cross-file references, it doesn't really matter how you choose to store yours.
+
+#### Style Classes
+Style classes are essentially the same thing as regular classes that you'd put in the 'class' attribute, except for they're for inline style only.
+
 ### Future Plans
 * More customizability
 * Update the webpage to have a text editor and use that, right now I use live-editor and change the actual contents of index.html
-* Style classes, which are essentially components but for groups of inline style attributes
 * Import a document and try to replace portions with known components

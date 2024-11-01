@@ -8,13 +8,13 @@ function saveHTML(element, options = {}) {
 
 	const filename = options.filename || '';
 
-	const html = ArraytoHTML(HTMLtoArray(element.innerHTML), options);
+	const html = ArraytoHTML(HTMLtoArray(element.getHTML()), options);
 
 	const blob = new Blob([html.trim()], { type: 'text/html' });
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement('a');
 	a.href = url;
-	a.download = filename + timestamp + '.xml';
+	a.download = filename + timestamp + '.html';
 	a.click();
 
 	URL.revokeObjectURL(url);
