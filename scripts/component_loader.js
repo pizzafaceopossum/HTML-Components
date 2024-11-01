@@ -35,58 +35,7 @@ async function fetchComponentList(value)
 		loadedComponents[name] = {path: path, document: doc, references: {}};
 		const duplicates = {ctype: {}, stype: {}};
 		const internalReferences = {};
-		for (const child of doc.documentElement.querySelector('body').children)
-		{
-			switch (child.tagName.toLowerCase())
-			{
-				case 'styleclass':
-					//console.log(styleClass);
-					if (!child.attributes.stype || !child.attributes.stype.value)
-					{
-						throw SyntaxError(`Undefined or empty stype in namespace '${name}' (From '${loadedComponents[name].path}')`);
-					}
-					else if (duplicates.stype[child.attributes.stype.value])
-					{
-						throw SyntaxError(`Duplicate styleclass '${child.attributes.stype.value}' in namespace '${name}' (From '${loadedComponents[name].path}')`);
-					}
-					duplicates.stype[child.attributes.stype.value] = true;
-					child.stype = `${name}::${child.stype}`;
-					break;
-				case 'cdefn':
-					//console.log(definition);
-					if (!child.attributes.ctype || !child.attributes.ctype.value)
-					{
-						throw SyntaxError(`Undefined or empty ctype in namespace '${name}' (From '${loadedComponents[name].path}')`);
-					}
-					else if (duplicates.ctype[child.attributes.ctype.value] == true)
-					{
-						throw SyntaxError(`Duplicate definition '${child.attributes.ctype.value}' in namespace '${name}' (From '${loadedComponents[name].path}')`);
-					}
-					else if (child.querySelector('cdefn'))
-					{
-						throw SyntaxError(`Definition within definition '${child.attributes.ctype.value}' in namespace '${name}' (From '${loadedComponents[name].path}')`);
-					}
-					else if (child.querySelector('styleclass'))
-					{
-						throw SyntaxError(`Style class within definition '${child.attributes.ctype.value}' in namespace '${name}' (From '${loadedComponents[name].path}')`);
-					}
-					duplicates.ctype[child.attributes.ctype.value] = true;
-					internalReferences[`${name}::${child.attributes.ctype.value}`] = {};
-					for (const componentChild of child.querySelectorAll('component'))
-					{
-						if (!/::/.test(componentChild.attributes.ctype.value))
-						{
-							componentChild.attributes.ctype.value = `${name}::${componentChild.attributes.ctype.value}`;
-						}
-						internalReferences[`${name}::${child.attributes.ctype.value}`][componentChild.attributes.ctype.value] = true;
-					}
-					break;
-				default:
-					throw SyntaxError(`Unknown tag '${child.tagName}' in namespace '${name}' (From '${loadedComponents[name].path}')`);
-					break;
-			}
-			
-		}
+		loadSection(doc.documentElement.querySelector('body'), duplicates, internalReferences, name, path);
 		loadedComponents[name].references = internalReferences;
 		for (const element of doc.querySelectorAll(`[style-class]`))
 		{

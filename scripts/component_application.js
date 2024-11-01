@@ -19,16 +19,16 @@ function applyAttributeInheritance(elem, attributes, styleAttributes)
 	console.log('component style attributes', styleAttributes);
 	*/
 	
+		// Inherit attributes: Start with all of the attributes
+	let attributesToInherit = [...attributes].filter(attr => !ignoredAttributes.includes(attr.name.toLowerCase()));
+	
 		// Don't even bother to do anything if the inheritor doesn't say to inherit any attributes or the component has none set or the inheritor has no contained elements
-	if (elem.childElementCount > 0 && [...elem.attributes].length > 0 && [...attributes].filter(attr => !ignoredAttributes.includes(attr.name.toLowerCase())).length + Object.keys(styleAttributes).length > 0)
+	if (elem.childElementCount > 0 && [...elem.attributes].length > 0 && attributesToInherit.length + Object.keys(styleAttributes).length > 0)
 	{
-			// Inherit attributes: Start with all of the attributes
-		let attributesToInherit = [...attributes]
-		
 			// Then if the 'all' attribute is set, just do them all, otherwise only do the ones that are set
 		if (elem.attributes.all == null)
 		{
-			attributesToInherit = attributesToInherit.filter(attr => [...elem.attributes].map(e => e.name).includes(attr) && !ignoredAttributes.includes(attr.name.toLowerCase()));
+			attributesToInherit = attributesToInherit.filter(attr => [...elem.attributes].map(e => e.name).includes(attr));
 		}
 		
 			// Inherit style attributes: Start by taking the defined style attributes
