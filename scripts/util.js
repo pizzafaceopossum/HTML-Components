@@ -42,7 +42,17 @@ function copyLoadedComponent(ctype)
 	ctype = ctype.split('::');
 	const ns = ctype[0].toLowerCase().trim();
 	const type = ctype[1].trim();
-	return loadedComponents[ns].document.querySelector(`cdefn[ctype="${type}"]`).cloneNode(true);
+	const doc = loadedComponents[ns];
+	if (loadedComponents[ns] == null)
+	{
+		throw ReferenceError(`Unrecognized namespace '${ctype[0].trim()}' (From '${ctype.join(':')}')`);
+	}
+	const definition = loadedComponents[ns].document.querySelector(`cdefn[ctype="${type}"]`);
+	if (definition == null)
+	{
+		throw ReferenceError(`Unrecognized definition '${ctype.join(':')}' (From '${loadedComponents[ns].path}')`);
+	}
+	return definition.cloneNode(true);
 }
 
 function getStyleClass(stype)
@@ -51,7 +61,18 @@ function getStyleClass(stype)
 	stype = stype.split('::');
 	const ns = stype[0];
 	const type = stype[1];
-	for (const styleAttr of loadedComponents[ns].document.querySelector(`styleclass[stype="${type}"]`).attributes.style.value.split(';').filter(e=>e))
+	
+	if (loadedComponents[ns] == null)
+	{
+		throw ReferenceError(`Unrecognized namespace '${stype[0].trim()}' (From '${stype.join(':')}')`);
+	}
+	const definition = loadedComponents[ns].document.querySelector(`styleclass[stype="${type}"]`);
+	if (definition == null)
+	{
+		throw ReferenceError(`Unrecognized style class '${stype.join(':')}' (From '${loadedComponents[ns].path}')`);
+	}
+	
+	for (const styleAttr of definition.attributes.style.value.split(';').filter(e=>e))
 	{
 		const split = styleAttr.split(':').filter(e=>e);
 		styleClass[split[0].trim()] = split[1].trim();

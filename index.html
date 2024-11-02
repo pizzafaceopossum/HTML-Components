@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 	</head>
-	<body style="background-color:#000; color:#f0f;">
+	<body style="background-color:#000; color:#fff; line-height:10pt; overflow-x: hidden">
 		<div style="position:absolute; top: 0px; left: 0px; width: 100vw; height: 100vh; display: flex; flex-direction: column;">
 			<div id = "header" style="background-color:#aaa; width: 100vw; height: 43.2px;">
 				<div style="width: 20vw; display: inline-block;"></div>
@@ -11,17 +11,23 @@
 				<button id="copy" onclick="saveHTML(display, {linebreak: '\n', tabulator: '\t', trim: true, keepComments: true, inlineTags: true, clipboard: true,});">copy to clipboard</button>
 				<span id="copyNotif" style="color:#000;display:none;">Copied!</span>
 			</div>
-			<div id = "display" style="position:absolute; top: 43.2px; left: 0px; width: 100vw;">
-				<div style="display:flex; flex-direction: row; width: 100%;">
-					<div style="display:flex; flex-direction: column; width: 100%;">
-						<span>Outer component with background color and text color red</span>
-						<component ctype="test::outer" style="background-color:#222;color:#f00"><span>6 (Defined in HTML, inherits all from outer)</span></component>
-					</div>
-					<div style="display:flex; flex-direction: column; width: 100%;">
-						<span>Outer component with background color and text color red</span>
-						<component ctype="test::outer2" style="background-color:#222;color:#f00"><component ctype="test::inner"><span>4 (inherits nothing from Outer)</span></component><span>6 (Defined in HTML, inherits all from outer)</span></component>
-					</div>
-				</div>
+			<div id = "display" style="position:absolute; top: 43.2px; left: 50px; width: calc(100vw - 50px);">
+				<!--<div style="display:flex; flex-direction: row; width: 100%;">-->
+	<p>1.------------------------------------------------------------------------------------------</p>
+	<component ctype="placement::no indicators"><span style="color:#0f0">Child without classes</span><span class="class" style="color:#f00">Child with classes</span></component>
+	<p>2.------------------------------------------------------------------------------------------</p>
+	<component ctype="placement::basic indicator"><span style="color:#0f0">Child without classes</span><span class="class" style="color:#f00">Child with classes</span></component>
+<p>3.------------------------------------------------------------------------------------------</p>
+	<component ctype="placement::multi indicator 1"><span style="color:#0f0">Child without classes</span><span class="class" style="color:#f00">Child with classes</span></component>
+<p>4.------------------------------------------------------------------------------------------</p>
+	<component ctype="placement::conditional indicator 1"><span style="color:#0f0">Child without classes</span><span class="class" style="color:#f00">Child with classes</span></component>
+<p>5.------------------------------------------------------------------------------------------</p>
+	<component ctype="placement::conditional indicator 2"><span style="color:#0f0">Child without classes</span><span class="class" style="color:#f00">Child with classes</span></component>
+<p>6.------------------------------------------------------------------------------------------</p>
+	<component ctype="placement::indicator nesting 1"><span style="color:#0f0">Child without classes</span><span class="class" style="color:#f00">Child with classes</span></component>
+<p>7.------------------------------------------------------------------------------------------</p>
+	<component ctype="placement::indicator nesting 2"><div style="color:#ff0"><span>Div without classes</span></div><span style="color:#0f0">Span without classes</span><span class="class" style="color:#f00">Span with classes</span><div class="class" style="color:#f0f"><span>Div with classes</span></div></component>
+				<!--</div>-->
 			</div>
 		</div>
 	</body>

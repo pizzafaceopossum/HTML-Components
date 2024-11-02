@@ -13,11 +13,9 @@ function loadSection(element, duplicates, internalReferences, name, path)
 				loadSection(child, duplicates, internalReferences, name, path);
 				break;
 			case 'styleclass':
-				//console.log(styleClass);
 				loadStyleClass(child, duplicates, name, path);
 				break;
 			case 'cdefn':
-				//console.log(definition);
 				loadDefinition(child, duplicates, internalReferences, name, path);
 				break;
 			default:
