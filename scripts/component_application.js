@@ -109,9 +109,8 @@ function applyAttributeInheritance(component, componentDef)
 				// Then if the 'all' attribute is set, just do them all, otherwise only do the ones that are set
 			if (inheritor.attributes.all == null)
 			{
-				attributesToInherit = attributesToInherit.filter(attr => [...inheritor.attributes].map(e => e.name).includes(attr));
+				attributesToInherit = attributesToInherit.filter(attr => [...inheritor.attributes].map(e => e.name.toLowerCase()).includes(attr.name.toLowerCase()));
 			}
-			
 				// Then filter by which the inheritor says to inherit, if any
 			if (inheritor.attributes.style)
 			{
@@ -121,7 +120,7 @@ function applyAttributeInheritance(component, componentDef)
 			{
 				styleToInherit = inheritor.attributes.all ? styleToInherit : [];
 			}
-			//console.log('inheritor', inheritor, 'given attributes', attributes, 'given style', styleAttributes, 'toInherit', attributesToInherit, 'styleToInherit', styleToInherit);
+			//console.log('inheritor', inheritor, 'given attributes', component.attributes, 'given style', styleAttributes, 'attributesToInherit', attributesToInherit, 'styleToInherit', styleToInherit);
 			for (const child of inheritor.children)
 			{
 					// Attributes overwrite those already set, when they exist on the parent instance
