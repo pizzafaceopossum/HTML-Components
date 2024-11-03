@@ -35,13 +35,13 @@ async function fetchComponentList(value)
 		loadedComponents[name] = {path: path, document: doc, references: {}};
 		const duplicates = {ctype: {}, stype: {}};
 		const internalReferences = {};
-		loadSection(doc.documentElement.querySelector('body'), duplicates, internalReferences, name, path);
+		loadSection(doc.documentElement.querySelector('body'), duplicates, internalReferences, name + ':', path);
 		loadedComponents[name].references = internalReferences;
 		for (const element of doc.querySelectorAll(`[style-class]`))
 		{
 			element.attributes['style-class'].value = element.attributes['style-class'].value
 			.split(',')
-			.map(e => `${name}::${e.trim().toLowerCase()}`)
+			.map(e => `${name}:${e.trim().toLowerCase()}`)
 			.join(',');
 		}
 	}

@@ -39,16 +39,32 @@ function styleStringFromObject(ob) { return Object.entries(ob).map(e=>e.join(':'
 	// Make a copy of a loaded component to be inserted somewhere.
 function copyLoadedComponent(ctype)
 {
-	ctype = ctype.split('::');
-	const ns = ctype[0].toLowerCase().trim();
-	const type = ctype[1].trim();
-	const doc = loadedComponents[ns];
-	if (loadedComponents[ns] == null)
+	ctype = ctype.split(':').filter(e=>e);
+	const _ctype = [...ctype];	// For error info
+	const ns = ctype.shift().toLowerCase().trim();
+	ctype = ctype.pop().split('.').filter(e=>e);
+	const type = ctype.pop().trim();
+	
+	
+	if (loadedComponents[ns] === null)
 	{
-		throw ReferenceError(`Unrecognized namespace '${ctype[0].trim()}' (From '${ctype.join(':')}')`);
+		throw ReferenceError(`Unrecognized namespace '${_ctype[0].trim()}' (From '${_ctype.join(':')}')`);
 	}
-	const definition = loadedComponents[ns].document.querySelector(`cdefn[ctype="${type}"]`);
-	if (definition == null)
+	
+	let section = loadedComponents[ns].document;
+
+	for (let i in ctype)
+	{
+		const nextSection = section.querySelector(`cSection[ctype="${ctype[i]}"]`);
+		if (nextSection === null)
+		{
+			throw ReferenceError(`Unrecognized section '${ns}:${ctype.toSpliced(i + 1).join(':')}' (From '${loadedComponents[ns].path}')`);
+		}
+		section = nextSection;
+	}
+	
+	const definition = section.querySelector(`cdefn[ctype="${type}"]`);
+	if (definition === null)
 	{
 		throw ReferenceError(`Unrecognized definition '${ctype.join(':')}' (From '${loadedComponents[ns].path}')`);
 	}
@@ -58,7 +74,7 @@ function copyLoadedComponent(ctype)
 function getStyleClass(stype)
 {
 	const styleClass = {};
-	stype = stype.split('::');
+	stype = stype.split(':');
 	const ns = stype[0];
 	const type = stype[1];
 	

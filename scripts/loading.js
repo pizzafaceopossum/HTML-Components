@@ -1,9 +1,10 @@
 
 function loadSection(element, duplicates, internalReferences, name, path)
 {
+	//console.log('element', element, 'name', name, 'path', path);
 	if (element.tagName.toLowerCase() == 'csection')
 	{
-		name += element.attributes.ctype.value + ':';
+		name += element.attributes.ctype.value;
 	}
 	for (const child of element.children)
 	{
@@ -13,16 +14,17 @@ function loadSection(element, duplicates, internalReferences, name, path)
 				loadSection(child, duplicates, internalReferences, name, path);
 				break;
 			case 'styleclass':
-				loadStyleClass(child, duplicates, name, path);
+				loadStyleClass(child, duplicates, name + '.', path);
 				break;
 			case 'cdefn':
-				loadDefinition(child, duplicates, internalReferences, name, path);
+				loadDefinition(child, duplicates, internalReferences, name + '.', path);
 				break;
 			default:
 				throw SyntaxError(`Unknown tag '${child.tagName}' in namespace '${name}' (From '${loadedComponents[name].path}')`);
 				break;
 		}
 	}
+	//console.log('finished loading', 'element:', element, 'name:', name, 'path:', path);
 }
 
 
@@ -37,7 +39,7 @@ function loadStyleClass(child, duplicates, name, path)
 		throw SyntaxError(`Duplicate styleclass '${child.attributes.stype.value}' in namespace '${name}' (From '${path}')`);
 	}
 	duplicates.stype[child.attributes.stype.value] = true;
-	child.stype = `${name}::${child.stype}`;
+	child.stype = `${name}.${child.stype}`;
 }
 
 function loadDefinition(child, duplicates, internalReferences, name, path)
@@ -59,13 +61,19 @@ function loadDefinition(child, duplicates, internalReferences, name, path)
 		throw SyntaxError(`Style class within definition '${child.attributes.ctype.value}' in namespace '${name}' (From '${path}')`);
 	}
 	duplicates.ctype[child.attributes.ctype.value] = true;
-	internalReferences[`${name}::${child.attributes.ctype.value}`] = {};
+	internalReferences[`${name}${child.attributes.ctype.value}`] = {};
+	const ns = name.split(':').filter(e=>e)[0].toLowerCase().trim();
 	for (const componentChild of child.querySelectorAll('component'))
 	{
-		if (!/::/.test(componentChild.attributes.ctype.value))
+		if (/\~/.test(componentChild.attributes.ctype.value))
 		{
-			componentChild.attributes.ctype.value = `${name}::${componentChild.attributes.ctype.value}`;
+			componentChild.attributes.ctype.value = componentChild.attributes.ctype.value.replace(/\~/, ns + ':');
 		}
-		internalReferences[`${name}::${child.attributes.ctype.value}`][componentChild.attributes.ctype.value] = true;
+		else if (!/:/.test(componentChild.attributes.ctype.value))
+		{
+			componentChild.attributes.ctype.value = `${name}${componentChild.attributes.ctype.value}`;
+		}
+		
+		internalReferences[`${name}${child.attributes.ctype.value}`][componentChild.attributes.ctype.value] = true;
 	}
 }
